@@ -25,7 +25,11 @@ public class MessageBuilder {
     }
 
     public MessageBuilder withLong(final Long l) {
-        parts.add(new MessagePart("Long", ByteOrder.LITTLE_ENDIAN, l, 8) {
+        return withLong(l, ByteOrder.LITTLE_ENDIAN);
+    }
+
+    public MessageBuilder withLong(final Long l, ByteOrder order) {
+        parts.add(new MessagePart("Long", order, l, 8) {
             @Override
             void putData(ByteBuffer buffer) {
                 buffer.putLong(l);
@@ -39,8 +43,12 @@ public class MessageBuilder {
         return this;
     }
 
-    public MessageBuilder withInt(final Integer i) {
-        parts.add(new MessagePart("Int", ByteOrder.LITTLE_ENDIAN, i, 4) {
+    public MessageBuilder withInt(Integer i) {
+        return withInt(i, ByteOrder.LITTLE_ENDIAN);
+    }
+
+    public MessageBuilder withInt(final Integer i, ByteOrder order) {
+        parts.add(new MessagePart("Int", order, i, 4) {
             @Override
             void putData(ByteBuffer buffer) {
                 buffer.putInt(i);
@@ -97,9 +105,10 @@ public class MessageBuilder {
         return this;
     }
 
-    public byte[] build(boolean first) {
+    public byte[] build(boolean first, boolean withTcpHeader) {
         StringBuilder builder = new StringBuilder("Message built:");
         int length = first ? 2 : 1;
+        if (!withTcpHeader) length--;
         for (MessagePart part : parts) {
             length += part.length;
         }
@@ -109,10 +118,12 @@ public class MessageBuilder {
             builder.append("\nFirst message, added 0xEF");
             buffer.put((byte) 0xEF);
         }
-        byte header = (byte) (length / 4);
-        builder.append("\nLength: 0x");
-        Message.appendHexByte(builder, header);
-        buffer.put(header);
+        if (withTcpHeader) {
+            byte header = (byte) (length / 4);
+            builder.append("\nLength: 0x");
+            Message.appendHexByte(builder, header);
+            buffer.put(header);
+        }
         for (Iterator<MessagePart> iterator = parts.iterator(); iterator.hasNext(); ) {
             MessagePart part = iterator.next();
             iterator.remove();
@@ -160,6 +171,6 @@ public class MessageBuilder {
         BasicConfigurator.configure();
         Long timestamp = System.currentTimeMillis() / 1000 << 32;
         byte[] bytes = aMessageBuilder().withLong(0L).withLong(timestamp).withNextLength()
-                .withInt(0x60469778).withBytes(new BigInteger("3E0549828CCA27E966B301A48FECE2FC", 16).toByteArray()).build(true);
+                .withInt(0x60469778).withBytes(new BigInteger("3E0549828CCA27E966B301A48FECE2FC", 16).toByteArray()).build(true, true);
     }
 }

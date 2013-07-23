@@ -3,7 +3,9 @@ package ru.vasil;
 import org.apache.log4j.Logger;
 import ru.vasil.message.Message;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.Socket;
 
 /**
@@ -38,6 +40,11 @@ public class SocketMessenger {
         out.write(bytes);
     }
 
+    public void write(byte[] bytes) throws IOException {
+        log.info(print(bytes, "Message TO:"));
+        out.write(bytes);
+    }
+
     private void writeFirstTCPHeader() throws IOException {
         if (firstWrite) {
             out.write(FIRST_HEADER);
@@ -54,7 +61,7 @@ public class SocketMessenger {
         int length = Message.parseHeader(HEADER_BUFFER);
         byte[] buffer = BUFFER;
         if (length > BUFFER_SIZE) {
-            buffer = new byte[length];
+//            buffer = new byte[length];
             log.warn("Using big buffer with size " + length);
         }
         read = in.read(buffer);

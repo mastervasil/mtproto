@@ -4,16 +4,10 @@ import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Logger;
 import ru.vasil.SocketMessenger;
 
-import javax.crypto.NoSuchPaddingException;
-import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-import java.security.spec.InvalidKeySpecException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * @author Vasil
@@ -54,7 +48,12 @@ public abstract class Message {
         ByteBuffer buffer = ByteBuffer.wrap(message);
         buffer.order(ByteOrder.LITTLE_ENDIAN);
         int constructorNumber = buffer.getInt();
-        return ANSWERS.get(constructorNumber).build(message, length);
+        MessageBuilder messageBuilder = ANSWERS.get(constructorNumber);
+        if (messageBuilder == null) {
+            LOG.info(SocketMessenger.print(message, length, "UNKNOWN MESSAGE"));
+            return null;
+        }
+        return messageBuilder.build(message, length);
     }
 
     public static void appendHexBytes(StringBuilder builder, byte... bytes) {
@@ -73,6 +72,33 @@ public abstract class Message {
     public static void main(String[] args) throws Exception {
         BasicConfigurator.configure();
         LOG.info(SocketMessenger.print(new ReqPQMessage().getBytes(), ""));
+    }
+
+    public static int getQ(long pq) {
+        for (int i = (int) Math.sqrt(pq); i > 0; i--) {
+            if (pq % i == 0) {
+                boolean fail = false;
+                for (int k = 2; k < i / 2; k++) {
+                    if (i % k == 0) {
+                        fail = true;
+                        break;
+                    }
+                }
+                if (fail) continue;
+                int q = (int) (pq / i);
+                for (int k = 2; k < q / 2; k++) {
+                    if (i % k == 0) {
+                        fail = true;
+                        break;
+                    }
+                }
+                if (!fail) {
+                    System.out.println(i + " " + q);
+                    return q;
+                }
+            }
+        }
+        throw new RuntimeException("Failed to find Q from 0x" + Long.toHexString(pq));
     }
 
     private interface MessageBuilder {
