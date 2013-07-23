@@ -4,10 +4,16 @@ import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Logger;
 import ru.vasil.SocketMessenger;
 
+import javax.crypto.NoSuchPaddingException;
+import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.security.spec.InvalidKeySpecException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Vasil

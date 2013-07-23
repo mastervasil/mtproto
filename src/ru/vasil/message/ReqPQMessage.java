@@ -1,5 +1,7 @@
 package ru.vasil.message;
 
+import org.apache.log4j.Logger;
+
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;

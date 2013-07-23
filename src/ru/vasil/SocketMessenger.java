@@ -3,9 +3,7 @@ package ru.vasil;
 import org.apache.log4j.Logger;
 import ru.vasil.message.Message;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.Socket;
 
 /**

@@ -1,15 +1,28 @@
 package ru.vasil.message;
 
+import org.apache.geronimo.mail.util.Base64;
+import org.apache.geronimo.mail.util.Base64Encoder;
 import ru.vasil.SocketMessenger;
 
+import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
+import java.io.ByteArrayInputStream;
+import java.io.StringReader;
+import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.security.KeyFactory;
-import java.security.MessageDigest;
+import java.nio.charset.Charset;
+import java.security.*;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPublicKey;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.KeySpec;
 import java.security.spec.RSAPublicKeySpec;
+import java.security.spec.X509EncodedKeySpec;
 
 /**
  * @author Vasil
