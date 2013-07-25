@@ -8,6 +8,8 @@ import ru.vasil.message.Message;
 import ru.vasil.message.MessageBuilder;
 import ru.vasil.message.ResPQMessage;
 
+import java.math.BigInteger;
+import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Random;
 
@@ -18,6 +20,7 @@ public class TCPClient {
     private static Logger log = Logger.getLogger(TCPClient.class);
 
     public static void main(String[] args) throws Exception {
+        System.out.println(Integer.toHexString(336));
         configureLog4j();
         long timestamp = (System.currentTimeMillis() / 1000) << 32;
         SocketMessenger messenger = new SocketMessenger("95.142.192.65", 80);
@@ -52,7 +55,40 @@ public class TCPClient {
                 .withBytes(new byte[]{(byte) 0xFE, 0, 1, 0})
                 .withBytes(encoded).build(false, true);
         messenger.write(mes);
-        messenger.read();
+        Message messageWithEnc = messenger.read();
+        ByteBuffer buffer = ByteBuffer.wrap(messageWithEnc.getBytes());
+        buffer.position(40);
+        byte[] encrypted = new byte[592];
+        buffer.get(encrypted);
+        log.info(SocketMessenger.print(encrypted, "Encrypted"));
+        Message.GPrime gPrime = Message.getGPrime(encrypted, message.clientNonce, message.serverNonce, rand);
+        byte[] forB = new byte[2048];
+        new Random().nextBytes(forB);
+        BigInteger b = new BigInteger(1, forB);
+        BigInteger gB = gPrime.g.modPow(b, gPrime.dhPrime);
+        log.info("gB: " + gB);
+
+        byte[] data = new byte[328-24];
+        buffer = ByteBuffer.wrap(data);
+        buffer.order(ByteOrder.LITTLE_ENDIAN);
+        buffer.putInt(0x6643b654).put(message.clientNonce).put(message.serverNonce).put(new byte[8])
+                .put(new byte[] {(byte) 0xFE, 0, 1, 0})
+                .put(gB.toByteArray());
+        timestamp = (System.currentTimeMillis() / 1000) << 32;
+        messenger.write(
+                MessageBuilder.aMessageBuilder()
+                        .withLong(0L).withLong(timestamp).withNextLength().withInt(0xf5045f1f)
+                        .withBytes(message.clientNonce).withBytes(message.serverNonce)
+                        .withBytes(new byte[]{(byte) 0xFE, 0x50, 1, 0})
+                        .withBytes(Message.encode(data))
+                        .build(false, true)
+        );
+        Message paramsMessage = messenger.read();
+        byte[] newNonce = new byte[16];
+        buffer = ByteBuffer.wrap(paramsMessage.getBytes());
+        buffer.get(new byte[36]);
+        buffer.get(newNonce);
+        log.info(SocketMessenger.print(newNonce, "New nonce"));
         messenger.close();
 }
 

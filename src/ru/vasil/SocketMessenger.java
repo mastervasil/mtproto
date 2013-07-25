@@ -18,7 +18,7 @@ public class SocketMessenger {
     private final OutputStream out;
     private final InputStream in;
     private final Socket socket;
-    private final byte[] HEADER_BUFFER = new byte[21];
+    private final byte[] HEADER_BUFFER = new byte[20];
     private final byte[] BUFFER = new byte[BUFFER_SIZE];
 
     private boolean firstWrite = true;
@@ -53,12 +53,18 @@ public class SocketMessenger {
     }
 
     public Message read() throws IOException {
+        byte[] tcpHeader = new byte[1];
+        in.read(tcpHeader);
+        if (tcpHeader[0] == 0x7f) {
+            tcpHeader = new byte[3];
+            in.read(tcpHeader);
+        }
         int read = in.read(HEADER_BUFFER);
-        if (read != 21) {
+        if (read != 20) {
             log.error(print(HEADER_BUFFER, "Malformed header with size " + read));
             throw new RuntimeException("Malformed header received");
         }
-        int length = Message.parseHeader(HEADER_BUFFER);
+        int length = Message.parseHeader(HEADER_BUFFER, tcpHeader);
         byte[] buffer = BUFFER;
         if (length > BUFFER_SIZE) {
 //            buffer = new byte[length];

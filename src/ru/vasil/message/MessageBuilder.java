@@ -119,10 +119,20 @@ public class MessageBuilder {
             buffer.put((byte) 0xEF);
         }
         if (withTcpHeader) {
-            byte header = (byte) (length / 4);
-            builder.append("\nLength: 0x");
-            Message.appendHexByte(builder, header);
-            buffer.put(header);
+            if (length > 0x7e * 4) {
+                length += 3;
+                buffer.put((byte) 0x7f);
+                buffer.put((byte) (length % 0x100));
+                buffer.put((byte) (length / 0x100));
+                buffer.put((byte) 0);
+                builder.append("\nLength in 4-bytes format: 0x7e ");
+                Message.appendHexBytes(builder, (byte) (length % 0x100), (byte) (length / 0x100));
+            } else {
+                byte header = (byte) (length / 4);
+                builder.append("\nLength: 0x");
+                Message.appendHexByte(builder, header);
+                buffer.put(header);
+            }
         }
         for (Iterator<MessagePart> iterator = parts.iterator(); iterator.hasNext(); ) {
             MessagePart part = iterator.next();
