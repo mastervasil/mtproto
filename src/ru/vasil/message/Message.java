@@ -9,6 +9,7 @@ import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -239,6 +240,28 @@ public abstract class Message {
         return buffer.put(a).put(b).array();
     }
 
+    public static byte[] wrapString(byte[] bytes) {
+        if (bytes.length >= 254) {
+            throw new RuntimeException("Implement me! " + bytes.length);
+        }
+        int padding = 0;
+        while ((bytes.length + 1 + padding) % 4 != 0) {
+            padding++;
+        }
+        ByteBuffer buffer = ByteBuffer.allocate(bytes.length + 1 + padding);
+        buffer.put((byte) bytes.length).put(bytes);
+        for (int i = 0; i < padding; i++) {
+            buffer.put((byte) 0);
+        }
+        return buffer.array();
+    }
+
+    public static byte[] encode(byte[] data, byte[] aesKey, byte[] aesIv) throws Exception {
+        tmpAesKey = aesKey;
+        tmpAesIv = aesIv;
+        return encode(data);
+    }
+
     public static byte[] encode(byte[] data) throws Exception{
         ByteBuffer buffer;
 
@@ -290,5 +313,24 @@ public abstract class Message {
         System.out.println(SocketMessenger.print(encrypted, ""));
         System.out.println(encrypted.length);
         return encrypted;
+    }
+
+    public static byte[] getSHA1(byte[] bytes, int offset, int length) throws NoSuchAlgorithmException {
+        return getSHA1(ByteBuffer.allocate(length).put(bytes, offset, length).array());
+    }
+
+    public static byte[] getSHA1(byte[] bytes) throws NoSuchAlgorithmException {
+        MessageDigest sha1 = MessageDigest.getInstance("SHA1");
+        return sha1.digest(bytes);
+    }
+
+    public static byte[] trim(BigInteger b) {
+        byte[] bytes = b.toByteArray();
+        if (bytes.length % 2 != 0) {
+            ByteBuffer buffer = ByteBuffer.allocate(bytes.length - 1);
+            buffer.put(bytes, 1, bytes.length - 1);
+            return buffer.array();
+        }
+        return bytes;
     }
 }

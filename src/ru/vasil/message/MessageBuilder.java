@@ -112,6 +112,9 @@ public class MessageBuilder {
         for (MessagePart part : parts) {
             length += part.length;
         }
+        if (length > 0x7e * 4) {
+            length += 3;
+        }
 
         ByteBuffer buffer = ByteBuffer.allocate(length);
         if (first) {
@@ -120,7 +123,7 @@ public class MessageBuilder {
         }
         if (withTcpHeader) {
             if (length > 0x7e * 4) {
-                length += 3;
+                length = length / 4 - 1;
                 buffer.put((byte) 0x7f);
                 buffer.put((byte) (length % 0x100));
                 buffer.put((byte) (length / 0x100));
